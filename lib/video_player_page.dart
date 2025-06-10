@@ -1,6 +1,6 @@
-import 'package:flooting_container/video.dart';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
+import 'video.dart'; // This file contains the videoPlaylist list.
 
 class VideoPlayerPage extends StatefulWidget {
   @override
@@ -58,36 +58,39 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
   }
 
   Widget miniPlayer() {
-    return Dismissible(
-      key: ValueKey("mini-player"),
-      direction: DismissDirection.endToStart,
-      onDismissed: (_) => setState(() => isMinimized = false),
-      child: Container(
-        width: 180,
-        height: 100,
-        decoration: BoxDecoration(
-          color: Colors.black,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Stack(
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: AspectRatio(
-                aspectRatio: _controller.value.aspectRatio,
-                child: VideoPlayer(_controller),
+    return Container(
+      width: 200,
+      height: 120,
+      decoration: BoxDecoration(
+        color: Colors.black,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 6)],
+      ),
+      child: Stack(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: AspectRatio(
+              aspectRatio: _controller.value.aspectRatio,
+              child: VideoPlayer(_controller),
+            ),
+          ),
+          Positioned(
+            top: 4,
+            right: 4,
+            child: GestureDetector(
+              onTap: () => setState(() => isMinimized = false),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.black54,
+                  shape: BoxShape.circle,
+                ),
+                padding: EdgeInsets.all(4),
+                child: Icon(Icons.close, size: 18, color: Colors.white),
               ),
             ),
-            Positioned(
-              right: 4,
-              top: 4,
-              child: GestureDetector(
-                onTap: () => setState(() => isMinimized = false),
-                child: Icon(Icons.fullscreen, color: Colors.white),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -96,16 +99,70 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
     return ListView.builder(
       itemCount: videoPlaylist.length,
       itemBuilder: (context, index) {
-        return ListTile(
-          title: Text('Video ${index + 1}'),
-          onTap: () {
-            _controller.removeListener(checkVideoEnd);
-            _controller.dispose();
-            currentIndex = index;
-            initializePlayer(currentIndex);
-            setState(() {
-              isMinimized = false;
-            });
+        final tempController = VideoPlayerController.asset(
+          videoPlaylist[index],
+        );
+
+        return FutureBuilder(
+          future: tempController.initialize(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.done) {
+              final duration = tempController.value.duration;
+              return Card(
+                margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 4,
+                child: InkWell(
+                  onTap: () {
+                    _controller.removeListener(checkVideoEnd);
+                    _controller.dispose();
+                    currentIndex = index;
+                    initializePlayer(currentIndex);
+                    setState(() => isMinimized = false);
+                  },
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.vertical(
+                          top: Radius.circular(12),
+                        ),
+                        child: AspectRatio(
+                          aspectRatio: tempController.value.aspectRatio,
+                          child: VideoPlayer(tempController),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(12.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Video ${index + 1}',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            Text(
+                              '${duration.inMinutes}:${(duration.inSeconds % 60).toString().padLeft(2, '0')}',
+                              style: TextStyle(color: Colors.grey[600]),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            } else {
+              return Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Center(child: CircularProgressIndicator()),
+              );
+            }
           },
         );
       },
