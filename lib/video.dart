@@ -1,7 +1,11 @@
 // video_data.dart
 
 List<String> videoPlaylist = [
-  'assets/videos/video1.mp4',
-  'assets/videos/video2.mp4',
-  'assets/videos/video3.mp4',
+  'assets/video1.mp4',
+  'assets/video2.mp4',
+  'assets/video3.mp4',
+  'assets/video4.mp4',
+  'assets/video5.mp4',
+  'assets/video6.mp4',
+  'assets/video7.mp4',
 ];
