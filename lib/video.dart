@@ -5,7 +5,6 @@ List<String> videoPlaylist = [
   'assets/video2.mp4',
   'assets/video3.mp4',
   'assets/video4.mp4',
-  'assets/video5.mp4',
-  'assets/video6.mp4',
+
   'assets/video7.mp4',
 ];
