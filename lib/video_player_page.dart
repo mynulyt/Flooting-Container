@@ -1,3 +1,4 @@
+import 'package:flooting_container/video.dart';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
@@ -8,57 +9,85 @@ class VideoPlayerPage extends StatefulWidget {
 
 class _VideoPlayerPageState extends State<VideoPlayerPage> {
   late VideoPlayerController _controller;
+  int currentIndex = 0;
   bool isMinimized = false;
   Offset position = Offset(20, 500);
 
   @override
   void initState() {
     super.initState();
-    _controller = VideoPlayerController.network(
-        'https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4',
-      )
+    initializePlayer();
+  }
+
+  void initializePlayer() {
+    _controller = VideoPlayerController.asset(videoPlaylist[currentIndex])
       ..initialize().then((_) {
         setState(() {});
         _controller.play();
+        _controller.addListener(checkVideoEnd);
       });
+  }
+
+  void checkVideoEnd() {
+    if (_controller.value.position >= _controller.value.duration &&
+        !_controller.value.isPlaying) {
+      playNextVideo();
+    }
+  }
+
+  void playNextVideo() {
+    _controller.removeListener(checkVideoEnd);
+    _controller.dispose();
+    currentIndex = (currentIndex + 1) % videoPlaylist.length;
+    initializePlayer();
   }
 
   @override
   void dispose() {
+    _controller.removeListener(checkVideoEnd);
     _controller.dispose();
     super.dispose();
   }
 
   Widget miniPlayer() {
-    return Container(
-      width: 160,
-      height: 90,
-      decoration: BoxDecoration(
-        color: Colors.black,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Stack(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: AspectRatio(
-              aspectRatio: _controller.value.aspectRatio,
-              child: VideoPlayer(_controller),
+    return Dismissible(
+      key: ValueKey("mini-player"),
+      direction: DismissDirection.endToStart,
+      onDismissed: (_) {
+        setState(() {
+          isMinimized = false;
+        });
+      },
+      child: Container(
+        width: 160,
+        height: 90,
+        decoration: BoxDecoration(
+          color: Colors.black,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Stack(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: AspectRatio(
+                aspectRatio: _controller.value.aspectRatio,
+                child: VideoPlayer(_controller),
+              ),
             ),
-          ),
-          Positioned(
-            right: 4,
-            top: 4,
-            child: GestureDetector(
-              onTap: () {
-                setState(() {
-                  isMinimized = false;
-                });
-              },
-              child: Icon(Icons.fullscreen, color: Colors.white),
+            Positioned(
+              right: 4,
+              top: 4,
+              child: GestureDetector(
+                onTap: () {
+                  setState(() {
+                    isMinimized = false;
+                  });
+                },
+                child: Icon(Icons.fullscreen, color: Colors.white),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -66,7 +95,7 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Floating Video Demo")),
+      appBar: AppBar(title: Text("Floating Video Playlist")),
       body: Stack(
         children: [
           Center(
@@ -76,7 +105,6 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
             ),
           ),
 
-          // Fullscreen video player
           if (!isMinimized && _controller.value.isInitialized)
             Positioned.fill(
               child: Container(
@@ -112,7 +140,6 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
               ),
             ),
 
-          // Mini floating video
           if (isMinimized && _controller.value.isInitialized)
             Positioned(
               left: position.dx,

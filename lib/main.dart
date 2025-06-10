@@ -8,6 +8,10 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(title: 'Material App', home: VideoPlayerPage());
+    return MaterialApp(
+      title: 'Floating Video Player',
+      home: VideoPlayerPage(),
+      debugShowCheckedModeBanner: false,
+    );
   }
 }
